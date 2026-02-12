@@ -60,10 +60,20 @@ async def generate_review(product_name: str, image_base64: str):
         }
     }
 
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}",
+    }
+
     result = ""
 
     async with httpx.AsyncClient(timeout=60) as client:
-        async with client.stream("POST", API_URL, json=payload) as response:
+        async with client.stream(
+            "POST",
+            API_URL,
+            json=payload,
+            headers=headers,
+        ) as response:
 
             if response.status_code != 200:
                 yield f"请求失败: {response.status_code}"
