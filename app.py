@@ -61,8 +61,10 @@ async def generate_review(product_name: str, image_url: str):
 
     async with httpx.AsyncClient(timeout=60) as client:
         async with client.stream("POST", API_URL, json=payload) as response:
+
             if response.status_code != 200:
-                return f"请求失败: {response.status_code}"
+                yield f"请求失败: {response.status_code}"
+                return
 
             async for line in response.aiter_lines():
                 if not line:
