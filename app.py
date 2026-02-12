@@ -2,38 +2,41 @@ import streamlit as st
 import asyncio
 import httpx
 import json
+import base64
 
-API_URL = "https://x9v2scwwvm.coze.site/stream_run"
+API_URL = "http://localhost:5000/stream_run"
 
 st.set_page_config(page_title="商品评论生成器", page_icon="🛍️")
 st.title("🛍️ 商品评论生成器")
 
-# 初始化 session_state
-if "product_name" not in st.session_state:
-    st.session_state.product_name = ""
-if "image_url" not in st.session_state:
-    st.session_state.image_url = ""
 if "generated_text" not in st.session_state:
     st.session_state.generated_text = ""
 if "submitted" not in st.session_state:
     st.session_state.submitted = False
 
 
-# ================== 商品提交表单 ==================
+# ================== 商品提交 ==================
 with st.form("product_form"):
     product_name = st.text_input("商品名称")
-    image_url = st.text_input("商品图片 URL")
+    uploaded_file = st.file_uploader("上传商品图片", type=["jpg", "jpeg", "png"])
+
     submit_product = st.form_submit_button("提交商品信息")
 
     if submit_product:
-        st.session_state.product_name = product_name
-        st.session_state.image_url = image_url
-        st.session_state.submitted = True
-        st.success("商品信息已提交 ✅")
+        if not product_name:
+            st.warning("请输入商品名称")
+        elif not uploaded_file:
+            st.warning("请上传商品图片")
+        else:
+            st.session_state.product_name = product_name
+            st.session_state.image_file = uploaded_file
+            st.session_state.submitted = True
+            st.success("商品信息已提交 ✅")
 
 
-# ================== 异步生成函数 ==================
-async def generate_review(product_name: str, image_url: str):
+# ================== 生成函数 ==================
+async def generate_review(product_name: str, image_base64: str):
+
     payload = {
         "type": "query",
         "session_id": "streamlit_session",
@@ -49,7 +52,7 @@ async def generate_review(product_name: str, image_url: str):
                     {
                         "type": "image",
                         "content": {
-                            "url": image_url
+                            "base64": image_base64
                         }
                     }
                 ]
@@ -82,24 +85,28 @@ async def generate_review(product_name: str, image_url: str):
                             yield result
 
 
-# ================== 生成评论按钮 ==================
+# ================== 生成评论 ==================
 if st.session_state.submitted:
     if st.button("生成评论"):
+
+        # 转 base64
+        bytes_data = st.session_state.image_file.read()
+        image_base64 = base64.b64encode(bytes_data).decode("utf-8")
+
         placeholder = st.empty()
 
         async def run():
             async for text in generate_review(
                 st.session_state.product_name,
-                st.session_state.image_url,
+                image_base64,
             ):
-                placeholder.markdown("### 评论生成中...")
+                placeholder.code(text)
                 st.session_state.generated_text = text
-                placeholder.code(st.session_state.generated_text)
 
         asyncio.run(run())
 
 
-# ================== 显示最终评论（带复制按钮） ==================
+# ================== 显示结果（带复制按钮） ==================
 if st.session_state.generated_text:
-    st.markdown("### ✅ 最终生成评论（可复制）")
+    st.markdown("### ✅ 最终生成评论")
     st.code(st.session_state.generated_text)
