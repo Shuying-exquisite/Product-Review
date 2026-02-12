@@ -46,7 +46,7 @@ async def generate_review(product_name: str, image_base64: str):
                     {
                         "type": "text",
                         "content": {
-                            "text": f"请为这个商品生成30字评论：\n商品名称：{product_name}"
+                            "text": f"请为这个商品生成40字评论：\n商品名称：{product_name}"
                         }
                     },
                     {
