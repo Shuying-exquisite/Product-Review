@@ -3,8 +3,8 @@ import asyncio
 import httpx
 import json
 import base64
-
-API_URL = "http://localhost:5000/stream_run"
+API_KEY = st.secrets["API_KEY"]
+API_URL = "https://x9v2scwwvm.coze.site/stream_run"
 
 st.set_page_config(page_title="商品评论生成器", page_icon="🛍️")
 st.title("🛍️ 商品评论生成器")
